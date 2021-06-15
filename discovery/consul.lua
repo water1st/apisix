@@ -120,11 +120,10 @@ end
 function _M.init_worker()
     -- 检查是否有配置
     local ok, err = core.schema.check(schema, consul_conf)
-    if not ok
-        then
-            log.error("invalid config" .. err)
-            return
-        end
+    if not ok then
+        log.error("invalid config" .. err)
+        return
+    end
 end
 
 
