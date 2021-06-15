@@ -49,7 +49,7 @@ local function get_consul_server_endpoint(service_name)
         end
     end
 
-    if consul_conf.alc_token ~= nil and #consul_conf.aalc_tokenlc ~= "" then
+    if consul_conf.alc_token ~= nil and #consul_conf.alc_token ~= "" then
         path = path .. split .. "token=" .. consul_conf.alc_token
         if split == "?" then
             split = "&"
