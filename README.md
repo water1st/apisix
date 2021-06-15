@@ -19,8 +19,8 @@ discovery:
     dc: "dc1"
     alc_token: "xxx"
 ```
-其中discovery下的子节点命名，必须和脚本同名，如consul.lua，其节点必须为其中discovery下的子节点命名，必须和脚本同名，如consul
-consule节点下，servers是必填项，dc和alc_token为选项
+其中`discovery`下的子节点命名，必须和脚本同名，如`consul.lua`，其节点必须为其中`discovery`下的子节点命名，必须和脚本同名，如`consul`
+`consule`节点下，`servers`是必填项，`dc`和`alc_token`为选项
 
 之后在每个路由配置为使用服务发现配置`upstream`字段
 ```json
