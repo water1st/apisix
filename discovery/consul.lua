@@ -32,12 +32,6 @@ local schema = {
     required = {"servers"}
 }
 
-
-local _M = {
-    version = 0.1,
-}
-
-
 local function get_consul_server_endpoint(service_name)
     local server = consul_conf.servers[random(1, #consul_conf.servers)]
     if string.sub(server,#server) == "/" then
@@ -111,6 +105,10 @@ local function get_nodes(service_name)
 
     return nodes
 end
+
+local _M = {
+    version = 0.1,
+}
 
 -- 获取服务节点列表
 function _M.nodes(service_name)
