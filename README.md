@@ -39,7 +39,7 @@ discovery:
     "type": "roundrobin",
     "discovery_type": "consul",
     "service_name": "TestService"
-  },
+  }
 ```
 
 
