@@ -1,0 +1,158 @@
+version: "3.8"
+
+services: 
+
+    apisix-dashboard:
+        image: apache/apisix-dashboard:2.6
+        container_name: apisix-dashboard
+        restart: always
+        ports: 
+            - 9000:9000
+        volumes: 
+            - ./config/apisix_dashboard_config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+
+    apisix1:
+        image: apache/apisix:2.5-alpine
+        container_name: apisix-node1
+        # restart: always
+        ports: 
+            - 9080:9080
+            - 9443:9443
+        volumes: 
+            - ./logs:/usr/local/apisix/logs
+            - ./config/apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
+            - ./discovery/consul.lua:/usr/local/apisix/apisix/discovery/consul.lua:ro
+        depends_on: 
+            - etcd1
+            - etcd2
+            - etcd3
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+
+    apisix2:
+        image: apache/apisix:2.5-alpine
+        container_name: apisix-node2
+        # restart: always
+        ports:
+            - 9081:9080
+            - 9444:9443
+        volumes: 
+            - ./logs:/usr/local/apisix/logs
+            - ./config/apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
+            - ./discovery/consul.lua:/usr/local/apisix/apisix/discovery/consul.lua:ro
+        depends_on: 
+            - etcd1
+            - etcd2
+            - etcd3
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+        
+    apisix3:
+        image: apache/apisix:2.5-alpine
+        container_name: apisix-node3
+        # restart: always
+        ports: 
+            - 9082:9080
+            - 9445:9443
+        volumes: 
+            - ./logs:/usr/local/apisix/logs
+            - ./config/apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
+            - ./discovery/consul.lua:/usr/local/apisix/apisix/discovery/consul.lua:ro
+        depends_on: 
+            - etcd1
+            - etcd2
+            - etcd3
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+
+    etcd1:
+        image: bitnami/etcd:3.4.9
+        container_name: apisix-etcd-node1
+        # restart: always
+        expose: 
+            - 2379
+            - 2380
+        environment: 
+            ETCD_NAME: "etcd1"
+            ETCD_ADVERTISE_CLIENT_URLS: "http://0.0.0.0:2379"
+            ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+            ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+            ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
+            ETCD_INITIAL_CLUSTER: "etcd1=http://apisix-etcd-node1:2380,etcd2=http://apisix-etcd-node2:2380,etcd3=http://apisix-etcd-node3:2380"
+            ETCD_INITIAL_CLUSTER_STATE: "new"
+            ETCD_DATA_DIR: /usr/local/etcd/data
+            ETCD_ENABLE_V2: "true"
+            ALLOW_NONE_AUTHENTICATION: "yes"
+        volumes: 
+            - ./data/etcd1:/usr/local/etcd/data
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+
+    
+    etcd2:
+        image: bitnami/etcd:3.4.9
+        container_name: apisix-etcd-node2
+        # restart: always
+        expose: 
+            - 2379
+            - 2380
+        environment: 
+            ETCD_NAME: "etcd2"
+            ETCD_ADVERTISE_CLIENT_URLS: "http://0.0.0.0:2379"
+            ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+            ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+            ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
+            ETCD_INITIAL_CLUSTER: "etcd1=http://apisix-etcd-node1:2380,etcd2=http://apisix-etcd-node2:2380,etcd3=http://apisix-etcd-node3:2380"
+            ETCD_INITIAL_CLUSTER_STATE: "new"
+            ETCD_DATA_DIR: /usr/local/etcd/data
+            ETCD_ENABLE_V2: "true"
+            ALLOW_NONE_AUTHENTICATION: "yes"
+        volumes: 
+            - ./data/etcd2:/usr/local/etcd/data
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+
+    etcd3:
+        image: bitnami/etcd:3.4.9
+        container_name: apisix-etcd-node3
+        # restart: always
+        expose:  
+            - 2379
+            - 2380
+        environment: 
+            ETCD_NAME: "etcd3"
+            ETCD_ADVERTISE_CLIENT_URLS: "http://0.0.0.0:2379"
+            ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+            ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+            ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
+            ETCD_INITIAL_CLUSTER: "etcd1=http://apisix-etcd-node1:2380,etcd2=http://apisix-etcd-node2:2380,etcd3=http://apisix-etcd-node3:2380"
+            ETCD_INITIAL_CLUSTER_STATE: "new"
+            ETCD_DATA_DIR: /usr/local/etcd/data
+            ETCD_ENABLE_V2: "true"
+            ALLOW_NONE_AUTHENTICATION: "yes"
+        volumes: 
+            - ./data/etcd3:/usr/local/etcd/data
+        networks: 
+            # - apisix-network
+            - consul_network
+        privileged: true
+
+networks: 
+    # apisix-network:
+        # driver: bridge
+    consul_network:
+        external: true

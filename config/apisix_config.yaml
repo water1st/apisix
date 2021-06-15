@@ -1,0 +1,83 @@
+apisix:
+  node_listen: 9080
+  enable_ipv6: false
+
+  allow_admin:
+    - 0.0.0.0/0
+
+  admin_key:
+    - name: admin
+      key: edd1c9f034335f136f87ad84b625c8f1
+      role: admin
+    
+    - name: viewer
+      key: 4054f7cf07e344346cd3f287985e76a2
+      role: viewer
+
+etcd:
+  host:
+    - "http://apisix-etcd-node1:2379"
+    - "http://apisix-etcd-node2:2379"
+    - "http://apisix-etcd-node3:2379"
+  prefix: "/apisix"
+  timeout: 30
+
+discovery:
+  consul:
+    servers:
+      - "http://consul-node1:8500"
+      - "http://consul-node2:8500"
+      - "http://consul-node3:8500"
+      - "http://consul-node4:8500"
+    dc: "dc1"
+    #alc_token: "xxx"
+
+plugins:                          # plugin list (sorted in alphabetical order)
+  - api-breaker
+  - authz-keycloak
+  - basic-auth
+  - batch-requests
+  - consumer-restriction
+  - cors
+  # - dubbo-proxy
+  - echo
+  # - error-log-logger
+  # - example-plugin
+  - fault-injection
+  - grpc-transcode
+  - hmac-auth
+  - http-logger
+  - ip-restriction
+  - jwt-auth
+  - kafka-logger
+  - key-auth
+  - limit-conn
+  - limit-count
+  - limit-req
+  # - log-rotate
+  - node-status
+  - openid-connect
+  - prometheus
+  - proxy-cache
+  - proxy-mirror
+  - proxy-rewrite
+  - redirect
+  - referer-restriction
+  - request-id
+  - request-validation
+  - response-rewrite
+  - serverless-post-function
+  - serverless-pre-function
+  # - skywalking
+  - sls-logger
+  - syslog
+  - tcp-logger
+  - udp-logger
+  - uri-blocker
+  - wolf-rbac
+  - zipkin
+  - server-info
+  - traffic-split
+
+
+    
