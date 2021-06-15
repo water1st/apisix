@@ -124,7 +124,7 @@ function _M.init_worker()
     local ok, err = core.schema.check(schema, consul_conf)
     if not ok
         then
-            log.error("配置错误：" .. err)
+            log.error("invalid config" .. err)
             return
         end
 end
