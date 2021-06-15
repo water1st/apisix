@@ -24,9 +24,9 @@ discovery:
 
 之后在每个路由配置为使用服务发现配置`upstream`字段
 ```json
-  "uris":["/test/*"],
-  "name":"test",
-  "methods":["GET"],
+  "uris": ["/test/*"],
+  "name": "test",
+  "methods": ["GET"],
   "plugins": {
     "proxy-rewrite": {
       "regex_uri": [
