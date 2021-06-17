@@ -59,6 +59,7 @@ authentication:
       password: user
 
 plugins:                          # plugin list (sorted in alphabetical order)
+  - identity-server4
   - api-breaker
   - authz-keycloak
   - basic-auth

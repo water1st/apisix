@@ -7,8 +7,7 @@ local log                = core.log
 local ipairs             = ipairs
 local math               = math
 local random             = math.random
-
-local consul_conf = local_conf.discovery.consul
+local consul_conf        = local_conf.discovery.consul
 
 local schema = {
     type = "object",

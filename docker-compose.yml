@@ -10,6 +10,7 @@ services:
             - 9000:9000
         volumes: 
             - ./config/apisix_dashboard_config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+            - ./plugins/identity-server4.lua:/usr/local/apisix/apisix/plugins/identity-server4.lua:ro
         networks: 
             # - apisix-network
             - consul_network
@@ -26,6 +27,7 @@ services:
             - ./logs:/usr/local/apisix/logs
             - ./config/apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
             - ./discovery/consul.lua:/usr/local/apisix/apisix/discovery/consul.lua:ro
+            - ./plugins/identity-server4.lua:/usr/local/apisix/apisix/plugins/identity-server4.lua:ro
         depends_on: 
             - etcd1
             - etcd2
@@ -46,6 +48,7 @@ services:
             - ./logs:/usr/local/apisix/logs
             - ./config/apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
             - ./discovery/consul.lua:/usr/local/apisix/apisix/discovery/consul.lua:ro
+            - ./plugins/identity-server4.lua:/usr/local/apisix/apisix/plugins/identity-server4.lua:ro
         depends_on: 
             - etcd1
             - etcd2
@@ -66,6 +69,7 @@ services:
             - ./logs:/usr/local/apisix/logs
             - ./config/apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
             - ./discovery/consul.lua:/usr/local/apisix/apisix/discovery/consul.lua:ro
+            - ./plugins/identity-server4.lua:/usr/local/apisix/apisix/plugins/identity-server4.lua:ro
         depends_on: 
             - etcd1
             - etcd2

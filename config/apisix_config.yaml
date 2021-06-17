@@ -33,6 +33,7 @@ discovery:
     #alc_token: "xxx"
 
 plugins:                          # plugin list (sorted in alphabetical order)
+  - identity-server4
   - api-breaker
   - authz-keycloak
   - basic-auth
