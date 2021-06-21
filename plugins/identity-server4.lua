@@ -14,6 +14,12 @@ local discovery_info = {
     data = {}
 }
 
+local access_token = {
+    access_token = "",
+    expiration_time = -1,
+    token_type = ""
+}
+
 local schema = {
     type = "object",
     properties = {
@@ -29,10 +35,6 @@ local schema = {
             type = "string",
             minItems = 1
         },
-        identity_server_admin_api_uri = {
-            type = "string",
-            minItems = 1
-        },
         public_key = {
             type = "string",
             minItems = 1
@@ -40,7 +42,28 @@ local schema = {
         introspect_type = {
             type = "string",
             enum = {"public_key", "identity_server"}
+        },
+        identity_server_admin_api_uri = {
+            type = "string",
+            minItems = 1
+        },
+        identity_server_admin_api_client_client_id = {
+            type = "string",
+            minItems = 1
+        },
+        identity_server_admin_api_client_grant_type = {
+            type = "string",
+            minItems = 1
+        },
+        identity_server_admin_api_client_client_secret = {
+            type = "string",
+            minItems = 1
+        },
+        identity_server_admin_api_client_scopes = {
+            type = "string",
+            minItems = 1
         }
+
     },
     dependencies = {
         introspect_type = {
@@ -55,16 +78,21 @@ local schema = {
                 {
                     properties = {
                         introspect_type = { type = "string", enum = { "identity_server" } },
-                        identity_server_uri = { type = "string" },
                         apisix_api_secrets = { type = "string" },
                         apisix_api_name = { type = "string" }
                     },
-                    required = { "introspect_type" , "identity_server_uri", "apisix_api_secrets", "apisix_api_name" }
+                    required = { "introspect_type", "apisix_api_secrets", "apisix_api_name" }
                 }
             }
         }
     },
-    required = { "identity_server_admin_api_uri", "introspect_type" }
+    required = {"identity_server_uri",
+                "introspect_type",
+                "identity_server_admin_api_uri",
+                "identity_server_admin_api_client_client_id",
+                "identity_server_admin_api_client_grant_type",
+                "identity_server_admin_api_client_client_secret",
+                "identity_server_admin_api_client_scopes"}
 }
 
 
@@ -120,6 +148,8 @@ local function encodeBase64(source_str)
     return s64
 end
 
+
+
 local function get_jwt_token(context)
     local token = core.request.header(context, "authorization")
     if token ~= nil and token ~= "" then
@@ -147,7 +177,7 @@ local function get_discovery_endpoint(server)
     return endpoint
 end
 
-local function get_introspection_endpoint(identity_server_uri)
+local function request_discovery_endpoint(identity_server_uri)
     if not discovery_info.init then
 
         local endpoint = get_discovery_endpoint(identity_server_uri)
@@ -167,9 +197,56 @@ local function get_introspection_endpoint(identity_server_uri)
         discovery_info.data = response_body
         discovery_info.init = true
     end
+end
+
+local function get_introspection_endpoint(identity_server_uri)
+    request_discovery_endpoint(identity_server_uri)
 
     local introspection_endpoint = discovery_info.data.introspection_endpoint
     return introspection_endpoint
+end
+
+local function get_token_endpoint(identity_server_uri)
+    request_discovery_endpoint(identity_server_uri)
+
+    local token_endpoint = discovery_info.data.token_endpoint
+    return token_endpoint
+end
+
+local function get_apisix_client_info(config)
+    local info = "client_id=" .. config.identity_server_admin_api_client_client_id
+    info = info .. "&grant_type=" .. config.identity_server_admin_api_client_grant_type
+    info = info .. "&client_secret=" .. config.identity_server_admin_api_client_client_secret
+    info = info .. "&scopes=" .. config.identity_server_admin_api_client_scopes
+    return info
+end
+
+local function get_access_token(config)
+    if access_token.expiration_time == -1 or os.time() > access_token.expiration_time then
+        local endpoint = get_token_endpoint(config.identity_server_uri)
+        local client_info = get_apisix_client_info(config)
+        local http_client = http.new();
+        local response, error = http_client:request_uri(endpoint,{
+            method = "POST",
+            headers = {
+                ["Content-Type"] = "application/x-www-form-urlencoded",
+            },
+            body = client_info
+        })
+    
+        if not response then
+            logger.error("request error: ", error)
+        end
+    
+        local json_convert = cjson.new()
+        local response_body = json_convert.decode(response.body)
+
+        access_token.access_token = response_body.access_token
+        access_token.token_type = response_body.token_type
+        access_token.expiration_time = os.time() + response_body.expires_in
+    end
+
+    return access_token.token_type .. " " .. access_token.access_token
 end
 
 local function introspect_by_public_key(public_key, token)
