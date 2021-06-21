@@ -249,22 +249,31 @@ local function get_access_token(config)
     return access_token.token_type .. " " .. access_token.access_token
 end
 
+local function authorize(config, token_info)
+    local access_token = get_access_token(config)
+
+end
+
 local function introspect_by_public_key(public_key, token)
     local jwt_object = jwt:load_jwt(token)
     if not jwt_object.valid then
-        return { code = 401 , response = { message = jwt_object.reason }}
+        return { success = false, code = 401 , response = { message = jwt_object.reason }}
     end
 
     local verified = jwt:verify_jwt_obj(public_key, jwt_object)
     if not verified then
-        return { code = 401 , response = { message = jwt_object.reason }}
+        return { success = false, code = 401 , response = { message = jwt_object.reason }}
     end
 
     if jwt_object.payload.exp <= os.time() then
-        return { code = 401 , response = { message = "token is has expired" }}
+        return { success = false, code = 401 , response = { message = "token is has expired" }}
     end
 
-    return nil
+    return {success = true, data = {
+        api_scopes = jwt_object.payload.scope,
+        api_resources = jwt_object.payload.aud,
+        client_id = jwt_object.payload.client_id
+    }}
 end
 
 local function introspect_by_identity_server(identity_server_uri, api_name, api_secrets,token)
@@ -289,10 +298,14 @@ local function introspect_by_identity_server(identity_server_uri, api_name, api_
     local response_body = json_convert.decode(response.body)
 
     if not response_body.active then
-        return {code = 401, response = { message = "invalid token" }}
+        return { success = false, code = 401, response = { message = "invalid token" }}
     end
 
-    return nil
+    return { success = true, data = {
+        api_scopes = split(response_body.scope, " "),
+        api_resources = response_body.aud,
+        client_id = response_body.client_id
+    }}
 end
 
 
@@ -319,10 +332,10 @@ function _M.rewrite(config, context)
     elseif config.introspect_type == "identity_server" then
         result = introspect_by_identity_server(config.identity_server_uri, config.apisix_api_name, config.apisix_api_secrets, jwt_token)
     else
-        result = { code = 500, response = { message = "invalid introspect type" } }
+        result = { success = false, code = 500, response = { message = "invalid introspect type" } }
     end
-    
-    if result ~= nil then
+
+    if not result.success then
         return result.code, result.response
     end
 end
