@@ -1,7 +1,4 @@
-local ngx = ngx
 local core = require("apisix.core")
-local plugin = require("apisix.plugin")
-local upstream = require("apisix.upstream")
 local jwt =  require("resty.jwt")
 local logger = core.log
 local http = require('resty.http')
