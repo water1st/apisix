@@ -9,8 +9,8 @@ services:
         ports: 
             - 9000:9000
         volumes: 
-            - ./config/apisix_dashboard_config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
-            - ./plugins/identity-server4.lua:/usr/local/apisix/apisix/plugins/identity-server4.lua:ro
+            - ./config/apisix_dashboard_config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
+            - ./config/schema.json:/usr/local/apisix-dashboard/conf/schema.json:ro
         networks: 
             # - apisix-network
             - consul_network
