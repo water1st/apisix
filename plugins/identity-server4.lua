@@ -48,16 +48,15 @@ local schema = {
                 {
                     properties = {
                         introspect_type = { type = "string", enum = { "identity_server" } },
-                        identity_server_uri = { type = "string" },
                         apisix_api_secrets = { type = "string" },
                         apisix_api_name = { type = "string" }
                     },
-                    required = { "introspect_type", "identity_server_uri", "apisix_api_secrets", "apisix_api_name" }
+                    required = { "introspect_type", "apisix_api_secrets", "apisix_api_name" }
                 }
             }
         }
     },
-    required = {"introspect_type"}
+    required = { "identity_server_uri", "introspect_type" }
 }
 
 
@@ -179,7 +178,7 @@ local function contains(array,item)
     return result
 end
 
-local function introspect_by_public_key(public_key, token)
+local function introspect_by_public_key(identity_server_uri, public_key, token)
     local jwt_object = jwt:load_jwt(token)
     if not jwt_object.valid then
         return { success = false, code = 401 , response = { message = jwt_object.reason }}
@@ -192,6 +191,10 @@ local function introspect_by_public_key(public_key, token)
 
     if  os.time() > jwt_object.payload.exp then
         return { success = false, code = 401 , response = { message = "token is has expired" }}
+    end
+
+    if identity_server_uri ~= jwt_object.payload.iss then
+        return { success = false, code = 401 , response = { message = "invalid issuer" } }
     end
 
     return {success = true, api_resources = jwt_object.payload.aud }
@@ -226,6 +229,10 @@ local function introspect_by_identity_server(identity_server_uri, api_name, api_
         return { success = false, code = 401 , response = { message = "token is has expired" }}
     end
 
+    if identity_server_uri ~= response_body.iss then
+        return { success = false, code = 401 , response = { message = "invalid issuer" } }
+    end
+
     return { success = true, api_resources = response_body.aud }
 end
 
@@ -247,7 +254,7 @@ function _M.rewrite(config, context)
     local result = nil
 
     if config.introspect_type == "public_key" then
-        result = introspect_by_public_key(config.public_key, jwt_token)
+        result = introspect_by_public_key(config.identity_server_uri, config.public_key, jwt_token)
     elseif config.introspect_type == "identity_server" then
         result = introspect_by_identity_server(config.identity_server_uri, config.apisix_api_name, config.apisix_api_secrets, jwt_token)
     else
