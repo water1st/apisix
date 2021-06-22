@@ -74,7 +74,9 @@ docker-compose up -d
 ### 启用Identity Server 4插件
 
 1、要启用IdentityServer4插件，必须先启用Consul服务发现模块
+
 2、确保服务在Consul的注册的`ServiceName`与IdentityServer4的`Api Resource`的`Name`一样
+
 3、在apisix节点把`identity-server4.lua`挂载到`/usr/local/apisix/apisix/plugins/`
 
 ```yml
