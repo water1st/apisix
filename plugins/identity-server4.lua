@@ -14,15 +14,15 @@ local discovery_info = {
 local schema = {
     type = "object",
     properties = {
-        identity_server_uri = {
+        issuer = {
             type = "string",
             minItems = 1
         },
-        apisix_api_name = {
+        api_name = {
             type = "string",
             minItems = 1
         },
-        apisix_api_secrets = {
+        api_secrets = {
             type = "string",
             minItems = 1
         },
@@ -32,7 +32,7 @@ local schema = {
         },
         introspect_type = {
             type = "string",
-            enum = {"public_key", "identity_server"}
+            enum = {"key", "issuer"}
         }
     },
     dependencies = {
@@ -40,23 +40,23 @@ local schema = {
             oneOf = {
                 {
                     properties = {
-                        introspect_type = { type = "string", enum = { "public_key" } },
+                        introspect_type = { type = "string", enum = { "key" } },
                         public_key = { type = "string" }
                     },
                     required = { "introspect_type" , "public_key" }
                 },
                 {
                     properties = {
-                        introspect_type = { type = "string", enum = { "identity_server" } },
-                        apisix_api_secrets = { type = "string" },
-                        apisix_api_name = { type = "string" }
+                        introspect_type = { type = "string", enum = { "issuer" } },
+                        api_secrets = { type = "string" },
+                        api_name = { type = "string" }
                     },
-                    required = { "introspect_type", "apisix_api_secrets", "apisix_api_name" }
+                    required = { "introspect_type", "api_secrets", "api_name" }
                 }
             }
         }
     },
-    required = { "identity_server_uri", "introspect_type" }
+    required = { "issuer", "introspect_type" }
 }
 
 
@@ -141,10 +141,10 @@ local function get_discovery_endpoint(server)
     return endpoint
 end
 
-local function get_introspection_endpoint(identity_server_uri)
+local function get_introspection_endpoint(issuer)
     if not discovery_info.init then
 
-        local endpoint = get_discovery_endpoint(identity_server_uri)
+        local endpoint = get_discovery_endpoint(issuer)
         local http_client = http.new();
     
         local response, error = http_client:request_uri(endpoint,{
@@ -178,7 +178,7 @@ local function contains(array,item)
     return result
 end
 
-local function introspect_by_public_key(identity_server_uri, public_key, token)
+local function introspect_by_key(issuer, public_key, token)
     local jwt_object = jwt:load_jwt(token)
     if not jwt_object.valid then
         return { success = false, code = 401 , response = { message = jwt_object.reason }}
@@ -193,15 +193,24 @@ local function introspect_by_public_key(identity_server_uri, public_key, token)
         return { success = false, code = 401 , response = { message = "token is has expired" }}
     end
 
-    if identity_server_uri ~= jwt_object.payload.iss then
+    if issuer ~= jwt_object.payload.iss then
         return { success = false, code = 401 , response = { message = "invalid issuer" } }
     end
 
-    return {success = true, api_resources = jwt_object.payload.aud }
+    local api_resources
+    if jwt_object.payload.aud and type(jwt_object.payload.aud) == "string" then
+        api_resources = { jwt_object.payload.aud }
+    elseif jwt_object.payload.aud and type(jwt_object.payload.aud) == "table" then
+        api_resources = jwt_object.payload.aud
+    else
+        api_resources = {}
+    end
+
+    return {success = true, api_resources = api_resources }
 end
 
-local function introspect_by_identity_server(identity_server_uri, api_name, api_secrets,token)
-    local endpoint = get_introspection_endpoint(identity_server_uri)
+local function introspect_by_issuer(issuer, api_name, api_secrets, token)
+    local endpoint = get_introspection_endpoint(issuer)
     local basic_token = encodeBase64(api_name .. ":" .. api_secrets)
 
     local http_client = http.new();
@@ -229,11 +238,20 @@ local function introspect_by_identity_server(identity_server_uri, api_name, api_
         return { success = false, code = 401 , response = { message = "token is has expired" }}
     end
 
-    if identity_server_uri ~= response_body.iss then
+    if issuer ~= response_body.iss then
         return { success = false, code = 401 , response = { message = "invalid issuer" } }
     end
 
-    return { success = true, api_resources = response_body.aud }
+    local api_resources
+    if response_body.aud and type(response_body.aud) == "string" then
+        api_resources = { response_body.aud }
+    elseif response_body.aud and type(response_body.aud) == "table" then
+        api_resources = response_body.aud
+    else
+        api_resources = {}
+    end
+
+    return { success = true, api_resources = api_resources }
 end
 
 local _M = {
@@ -253,10 +271,10 @@ function _M.rewrite(config, context)
 
     local result = nil
 
-    if config.introspect_type == "public_key" then
-        result = introspect_by_public_key(config.identity_server_uri, config.public_key, jwt_token)
-    elseif config.introspect_type == "identity_server" then
-        result = introspect_by_identity_server(config.identity_server_uri, config.apisix_api_name, config.apisix_api_secrets, jwt_token)
+    if config.introspect_type == "key" then
+        result = introspect_by_key(config.issuer, config.public_key, jwt_token)
+    elseif config.introspect_type == "issuer" then
+        result = introspect_by_issuer(config.issuer, config.api_name, config.api_secrets, jwt_token)
     else
         result = { success = false, code = 500, response = { message = "invalid introspect type" } }
     end
