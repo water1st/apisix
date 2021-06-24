@@ -46,9 +46,7 @@ docker-compose up -d
 
 ```json
 {
-  "uris": [
-    "/test/*"
-  ],
+  "uris": ["/test/*"],
   "name": "test",
   "methods": ["GET"],
   "plugins": {
