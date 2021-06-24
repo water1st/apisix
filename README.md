@@ -45,7 +45,10 @@ docker-compose up -d
 5、打开浏览器在dashboard为路由配置`upstream`字段
 
 ```json
-  "uris": ["/test/*"],
+{
+  "uris": [
+    "/test/*"
+  ],
   "name": "test",
   "methods": ["GET"],
   "plugins": {
@@ -61,6 +64,7 @@ docker-compose up -d
     "discovery_type": "consul",
     "service_name": "TestService"
   }
+}
 ```
 
 | 字段           | 类型   | 说明                   |
