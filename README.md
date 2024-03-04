@@ -114,7 +114,7 @@ docker-compose up -d
 
 
 
-采用公钥自省
+采用公钥校验
 
 ```json
 {
@@ -123,7 +123,7 @@ docker-compose up -d
   "public_key": "-----BEGIN PUBLIC KEY-----Your Public Key-----END PUBLIC KEY-----"
 }
 ```
-采用IdentityServer4自省
+采用IdentityServer4校验
 ```json
 {
   "introspect_type": "issuer",
@@ -137,7 +137,7 @@ docker-compose up -d
 
 | 字段 | 数据类型 | 必填 | 说明 |
 |--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-|introspect_type | string | 必填                                                                                      | 自省方式，枚举类型，可选"issuer"、"key"                                                     |
+|introspect_type | string | 必填                                                                                      | 校验方式，枚举类型，可选"issuer"、"key"                                                     |
 |issuer | string | 必填 | IdentityServer4的url |
 |api_name | string | 如果introspect_type = "issuer" 则为必填 | apisix在identityserver4注册的api resource name |
 |api_secrets | string | 如果introspect_type  = "issuer" 则为必填 | apisix在identityserver4注册的api resource secrets |
